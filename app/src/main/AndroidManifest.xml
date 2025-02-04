@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!--<uses-permission android:name="android.permission.READ_CONTACTS"/>-->
     <uses-permission android:name="com.iav.contestdataprovider.READ"/>
+    <uses-permission android:name="com.iav.contestdataprovider.WRITE"/>
     <queries>
         <provider android:authorities="com.iav.contestdataprovider"/>
     </queries>
