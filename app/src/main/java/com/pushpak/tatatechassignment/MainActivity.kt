@@ -1,9 +1,10 @@
 package com.pushpak.tatatechassignment
 
-import android.Manifest
+
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -11,6 +12,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,22 +36,23 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
-import com.pushpak.tatatechassignment.model.Contact
+import com.pushpak.tatatechassignment.model.IAVContentData
 import com.pushpak.tatatechassignment.ui.theme.TataTechAssignmentTheme
+import com.pushpak.tatatechassignment.utils.constants.COLUMN_NAME
+import com.pushpak.tatatechassignment.utils.constants.DATA_URI
 
 class MainActivity : ComponentActivity() {
-    private val viewModel by viewModels<ContactViewModel>()
+    private val viewModel by viewModels<MainViewModel>()
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.READ_CONTACTS),
-            0
-        )
-        getContactList()
+        try {
+            getContactList()
+        } catch (ex: Exception) {
+            Log.d("exception_calling", ex.toString())
+        }
+
         setContent {
             TataTechAssignmentTheme {
                 Getdata()
@@ -61,27 +64,23 @@ class MainActivity : ComponentActivity() {
     private fun getContactList() {
         val contentResolver = applicationContext.contentResolver
         val projection = arrayOf(
-            ContactsContract.Contacts._ID,
-            ContactsContract.Contacts.DISPLAY_NAME,
+            COLUMN_NAME
         )
         contentResolver.query(
-            ContactsContract.Contacts.CONTENT_URI,
+            Uri.parse(DATA_URI),
             projection,
-            null,
-            null
-        )?.use { cursor ->
-            val idColumn = cursor.getColumnIndex(ContactsContract.Contacts._ID)
-            val nameColum =
-                cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
-
-            val contacts = mutableListOf<Contact>()
-            while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
-                val name = cursor.getString(nameColum)
-                contacts.add(Contact(id, name))
+            "column_name = ?",      // Selection (WHERE clause)
+            arrayOf("value"),       // Selection arguments
+            "column_name DESC"
+        )
+            ?.use { cursor ->
+                val contacts = mutableListOf<IAVContentData>()
+                while (cursor.moveToNext()) { //  Moves to the first row
+                    val data = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME))
+                    contacts.add(IAVContentData(data.toString()))
+                }
+                viewModel.updateIAVContentData(contacts)
             }
-            viewModel.updateContacts(contacts)
-        }
 
     }
 
@@ -117,7 +116,7 @@ class MainActivity : ComponentActivity() {
             Spacer(Modifier.height(10.dp))
             Button(onClick = {
                 if (number != "")
-                    randomString = "get Random Strinng"
+                    randomString = "get Random String"
             }) {
                 Text("Get Random String")
             }
@@ -126,13 +125,13 @@ class MainActivity : ComponentActivity() {
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
+                    .fillMaxHeight()
+                    .height(200.dp)
             ) {
-                items(viewModel.contacts) { contact ->
+                items(viewModel.iavContentData) { contact ->
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = contact.name
+                        text = contact.data
                     )
                 }
             }
