@@ -170,11 +170,11 @@ class MainActivity : ComponentActivity() {
     private fun ContentResolver.insertData(length: Int) {
         try {
             val randomString = viewModel.getRandomString(length = length)
-            val objRandomText = RandomText(created = randomString, length = length, value = "123")
-            val objTable = TableData(objRandomText)
             val values = ContentValues().apply {
-                put("data", objTable.toString())
+                put("data", randomString)
             }
+            val getType= getType(Uri.parse(DATA_URI))
+            print("get Type $getType")
             insert(Uri.parse(DATA_URI), values)
         } catch (ex: Exception) {
             Log.d("Insert_Exception", ex.toString())
@@ -188,7 +188,7 @@ class MainActivity : ComponentActivity() {
             delete(deleteUri, null, null)
         } catch (ex: Exception) {
             Log.d("Delete_Exception", ex.toString())
-            Toast.makeText(applicationContext, "Getting Unsupported Operation Exception, While Inserting Data into Database.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, "Getting Unsupported Operation Exception.", Toast.LENGTH_SHORT).show()
         }
     }
 
