@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,15 +23,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,13 +51,14 @@ import com.pushpak.tatatechassignment.model.IAVContentData
 import com.pushpak.tatatechassignment.model.RandomText
 import com.pushpak.tatatechassignment.model.TableData
 import com.pushpak.tatatechassignment.ui.theme.TataTechAssignmentTheme
-import com.pushpak.tatatechassignment.utils.constants.COLUMN_NAME
-import com.pushpak.tatatechassignment.utils.constants.DATA_URI
-import com.pushpak.tatatechassignment.utils.constants.ID
+import com.pushpak.tatatechassignment.utils.COLUMN_NAME
+import com.pushpak.tatatechassignment.utils.DATA_URI
+import com.pushpak.tatatechassignment.utils.ID
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,7 +70,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TataTechAssignmentTheme {
-                Scaffold { padding ->
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("Random String") },
+                            colors = TopAppBarDefaults.mediumTopAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    }
+                ) { padding ->
                     Getdata(padding)
                 }
             }
@@ -74,9 +89,6 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getContactList() {
         val contentResolver = applicationContext.contentResolver
-        /*val projection = arrayOf(
-            ID, COLUMN_NAME
-        )*/
         contentResolver.query(
             Uri.parse(DATA_URI),
             null,
@@ -89,7 +101,7 @@ class MainActivity : ComponentActivity() {
                 while (cursor.moveToNext()) { //  Moves to the first row
                     val id = cursor.getInt(cursor.getColumnIndexOrThrow(ID))
                     val data = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME))
-                    contacts.add(IAVContentData(id = id, data.toString()))
+                    contacts.add(IAVContentData(_id = id, data.toString()))
                 }
                 viewModel.updateIAVContentData(contacts)
             }
@@ -99,31 +111,49 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Getdata(padding: PaddingValues) {
         var number by remember { mutableStateOf("") }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
         var randomString by remember { mutableStateOf("") }
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .verticalScroll(state = scrollState),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            Spacer(Modifier.height(100.dp))
+            Spacer(Modifier.height(50.dp))
             OutlinedTextField(
                 value = number,
-                onValueChange = { number = it },
+                onValueChange = { input ->
+                    if (input.all { it.isDigit() } && input.length < 4) {
+                        number = input
+                        errorMessage = if (input.isEmpty()) "Please Enter Length" else null
+                    } else if (input.length > 3) {
+                        errorMessage = "Maximum 3 Digits Are Allowed"
+                    } else
+                        errorMessage = "Only Numbers Are Allowed"
+                },
+                isError = errorMessage != null,
+                supportingText = {
+                    if (errorMessage != null) {
+                        Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 placeholder = {
-                    Text("Please Enter a Number")
+                    Text("Please Enter Length")
                 },
                 label = {
-                    Text("Please Enter a Number")
+                    Text("Please Enter Length")
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Spacer(Modifier.height(10.dp))
             Button(onClick = {
-                if (number != "") {
-                    randomString = getRandomString(number.toInt())
+                if (number.isEmpty())
+                    errorMessage = "Please Enter Length"
+                else {
+                    randomString = viewModel.getRandomString(number.toInt())
                     applicationContext.contentResolver.insertData(number.toInt())
                 }
             }) {
@@ -131,47 +161,14 @@ class MainActivity : ComponentActivity() {
             }
             Spacer(Modifier.height(10.dp))
             Text(modifier = Modifier.padding(horizontal = 10.dp), text = randomString)
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .height(200.dp)
-            ) {
-                items(viewModel.iavContentData) { contact ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(10F)
-                            .wrapContentHeight()
-                    ) {
-                        Text(
-
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(8F),
-                            text = contact.data
-                        )
-                        IconButton(
-                            modifier = Modifier.weight(2F),
-                            onClick = {
-                                applicationContext.contentResolver.deleteData(contact.id)
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,  // Using a predefined icon (Favorite)
-                                contentDescription = "Favorite Icon",  // Accessibility description
-                            )
-                        }
-                    }
-                }
-            }
+            ShowDataView(viewModel = viewModel)
         }
     }
 
 
     private fun ContentResolver.insertData(length: Int) {
         try {
-            val randomString = getRandomString(length = length)
+            val randomString = viewModel.getRandomString(length = length)
             val objRandomText = RandomText(created = randomString, length = length, value = "123")
             val objTable = TableData(objRandomText)
             val values = ContentValues().apply {
@@ -185,19 +182,46 @@ class MainActivity : ComponentActivity() {
 
     private fun ContentResolver.deleteData(id: Int) {
         try {
-            val deleteUri = Uri.parse("${DATA_URI}/$id")
+            val deleteUri = Uri.parse("$DATA_URI/$id")
             delete(deleteUri, null, null)
         } catch (ex: Exception) {
             Log.d("Delete_Exception", ex.toString())
         }
     }
 
+    @Composable
+    fun ShowDataView(viewModel: MainViewModel) {
+        LazyColumn(
+            modifier = Modifier
+                .height(500.dp)
+        ) {
+            items(viewModel.iavContentData) { contact ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                ) {
+                    Text(
 
-    private fun getRandomString(length: Int): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(8F),
+                        text = contact.data
+                    )
+                    IconButton(
+                        modifier = Modifier.weight(2F),
+                        onClick = {
+                            applicationContext.contentResolver.deleteData(contact._id)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,  // Using a predefined icon (Favorite)
+                            contentDescription = "Favorite Icon",  // Accessibility description
+                        )
+                    }
+                }
+            }
+        }
     }
 
 }

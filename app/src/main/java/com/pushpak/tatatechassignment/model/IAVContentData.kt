@@ -1,6 +1,6 @@
 package com.pushpak.tatatechassignment.model
 
 data class IAVContentData(
-    val id:Int,
+    val _id:Int,
     val data:String
 )
