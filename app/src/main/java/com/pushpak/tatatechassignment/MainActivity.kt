@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -47,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pushpak.tatatechassignment.model.IAVContentData
 import com.pushpak.tatatechassignment.model.RandomText
@@ -162,6 +164,12 @@ class MainActivity : ComponentActivity() {
             }
             Spacer(Modifier.height(10.dp))
             Text(modifier = Modifier.padding(horizontal = 10.dp), text = randomString)
+            Text(
+                modifier = Modifier.padding(top = 10.dp, bottom = 5.dp),
+                text = "Content Resolver Data",
+                textAlign = TextAlign.Center
+            )
+
             ShowDataView(viewModel = viewModel)
         }
     }
@@ -173,12 +181,16 @@ class MainActivity : ComponentActivity() {
             val values = ContentValues().apply {
                 put("data", randomString)
             }
-            val getType= getType(Uri.parse(DATA_URI))
+            val getType = getType(Uri.parse(DATA_URI))
             print("get Type $getType")
             insert(Uri.parse(DATA_URI), values)
         } catch (ex: Exception) {
             Log.d("Insert_Exception", ex.toString())
-            Toast.makeText(applicationContext, "Getting Unsupported Operation Exception.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                applicationContext,
+                "Getting Unsupported Operation Exception.",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -188,7 +200,11 @@ class MainActivity : ComponentActivity() {
             delete(deleteUri, null, null)
         } catch (ex: Exception) {
             Log.d("Delete_Exception", ex.toString())
-            Toast.makeText(applicationContext, "Getting Unsupported Operation Exception.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                applicationContext,
+                "Getting Unsupported Operation Exception.",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
