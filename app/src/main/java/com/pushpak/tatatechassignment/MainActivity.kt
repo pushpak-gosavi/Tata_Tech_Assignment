@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -177,6 +178,7 @@ class MainActivity : ComponentActivity() {
             insert(Uri.parse(DATA_URI), values)
         } catch (ex: Exception) {
             Log.d("Insert_Exception", ex.toString())
+            Toast.makeText(applicationContext, "Getting Unsupported Operation Exception.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -186,6 +188,7 @@ class MainActivity : ComponentActivity() {
             delete(deleteUri, null, null)
         } catch (ex: Exception) {
             Log.d("Delete_Exception", ex.toString())
+            Toast.makeText(applicationContext, "Getting Unsupported Operation Exception, While Inserting Data into Database.", Toast.LENGTH_SHORT).show()
         }
     }
 
